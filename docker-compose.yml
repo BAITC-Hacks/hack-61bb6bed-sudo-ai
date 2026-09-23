@@ -28,13 +28,22 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  review-demo:
+    build: ./backend
+    command: ["python", "-m", "scripts.seed_review_demo"]
+    environment:
+      <<: *backend-env
+      REVIEW_DEMO_ENABLED: ${REVIEW_DEMO_ENABLED:-true}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
   backend:
     build: ./backend
     environment: *backend-env
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
-      migrate:
+      review-demo:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
