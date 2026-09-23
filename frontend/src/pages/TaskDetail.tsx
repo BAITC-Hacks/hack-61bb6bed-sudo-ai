@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Clock3,
@@ -31,6 +31,7 @@ import {
 } from "../components/UI";
 export function TaskDetail() {
   const { id } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const data = useLoad(() => api<Task>(`/tasks/${id}`), [id, user?.id]);
   const teams = useLoad(
@@ -38,6 +39,10 @@ export function TaskDetail() {
       user?.role === "student" ? api<Team[]>("/teams/me") : Promise.resolve([]),
     [user?.id],
   );
+  useEffect(() => {
+    if (!data.loading && location.hash === "#proposals")
+      document.getElementById("proposals")?.scrollIntoView({ block: "start" });
+  }, [data.loading, location.hash, location.key]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -242,7 +247,7 @@ function BusinessProposals({
     }
   };
   return (
-    <section className="proposals-section">
+    <section id="proposals" className="proposals-section">
       <Heading
         title="Предложения команд"
         subtitle="Познакомьтесь с подходами и выберите команду для сотрудничества."

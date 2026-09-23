@@ -1,3 +1,4 @@
+import { StudentSetup } from "./pages/Student";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
@@ -28,6 +29,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="tasks/:id/edit" element={protectedPage(<Builder />)} />
           <Route element={<Layout />}>
             <Route path="catalog" element={<Explore />} />
+            <Route
+              path="student/profile"
+              element={protectedPage(<StudentSetup />)}
+            />
             <Route path="dashboard" element={protectedPage(<Dashboard />)} />
             <Route path="profile" element={protectedPage(<Profile />)} />
             <Route path="tasks/new" element={protectedPage(<NewTask />)} />

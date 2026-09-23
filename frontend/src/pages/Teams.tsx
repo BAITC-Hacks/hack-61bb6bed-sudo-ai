@@ -1,3 +1,4 @@
+import { TeamSuggestions } from "./Student";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -115,6 +116,7 @@ export function Teams() {
           </button>
         }
       />
+      <TeamSuggestions onJoined={data.refresh} />
       <ErrorBox message={data.error} />
       {creating && (
         <section className="panel create-team">
@@ -322,6 +324,36 @@ export function TeamPage() {
           </Link>
           {owner && (
             <div className="invite-section">
+              <h3>Набор в команду</h3>
+              <p>
+                При открытом наборе студенты увидят команду в рекомендациях и
+                смогут вступить без приглашения.
+              </p>
+              <label className="skill-picker">
+                <input
+                  type="checkbox"
+                  checked={team.open_to_join}
+                  disabled={busy}
+                  onChange={async (e) => {
+                    setBusy(true);
+                    setError("");
+                    try {
+                      await api(`/students/teams/${id}/recruitment`, {
+                        method: "PUT",
+                        body: JSON.stringify({
+                          open_to_join: e.target.checked,
+                        }),
+                      });
+                      load.refresh();
+                    } catch (e) {
+                      setError((e as Error).message);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                />
+                Открытый набор
+              </label>
               <h3>Пригласить участника</h3>
               <p className="muted small-text">
                 Одноразовая ссылка действует 7 дней. При создании новой

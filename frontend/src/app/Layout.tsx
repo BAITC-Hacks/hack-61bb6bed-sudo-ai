@@ -1,3 +1,4 @@
+import { Notifications } from "../components/Notifications";
 import { NavLink, Link, Outlet, useNavigate } from "react-router-dom";
 import {
   Compass,
@@ -23,7 +24,7 @@ export function Layout() {
   const signout = async () => {
     try {
       await logout();
-      nav("/");
+      nav("/", { replace: true });
     } catch (e) {
       setError((e as Error).message);
     }
@@ -124,6 +125,7 @@ export function Layout() {
               : "Открытые возможности"}
           </div>
           <div className="top-actions">
+            {user?.role === "business" && <Notifications key={user.id} />}
             {user ? (
               <>
                 <Link className="account-chip" to="/profile">

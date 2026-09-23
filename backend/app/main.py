@@ -11,7 +11,9 @@ from starlette.exceptions import HTTPException
 
 from app.api.auth import router as auth_router
 from app.api.interview import router as interview_router
+from app.api.notifications import router as notifications_router
 from app.api.routes import router
+from app.api.students import router as students_router
 from app.api.teams import router as teams_router
 from app.application.service import ChallengeService
 from app.core.config import Settings
@@ -123,6 +125,8 @@ def create_app(settings: Settings | None = None, analyzer=None) -> FastAPI:
         logger.error("request_failed", extra={"error_type": type(exc).__name__})
         return error_response("internal_error", "Внутренняя ошибка сервера.", 500)
 
+    app.include_router(notifications_router)
+    app.include_router(students_router)
     app.include_router(router)
     app.include_router(interview_router)
     app.include_router(auth_router)

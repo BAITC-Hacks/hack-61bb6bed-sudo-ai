@@ -11,11 +11,17 @@ import type { User } from "../api/types";
 const Context = createContext<{
   user: User | null;
   loading: boolean;
+  signedOut: boolean;
   setUser: (u: User | null) => void;
   logout: () => Promise<void>;
-}>({ user: null, loading: true, setUser: () => {}, logout: async () => {} });
+}>({ user: null, loading: true, signedOut: false, setUser: () => {}, logout: async () => {} });
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, updateUser] = useState<User | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
+  const setUser = (u: User | null) => {
+    if (u) setSignedOut(false);
+    updateUser(u);
+  };
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     api<User>("/auth/me")
@@ -28,24 +34,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const logout = async () => {
     await post("/auth/logout");
+    setSignedOut(true);
     setUser(null);
   };
   return (
-    <Context.Provider value={{ user, loading, setUser, logout }}>
+    <Context.Provider value={{ user, loading, signedOut, setUser, logout }}>
       {children}
     </Context.Provider>
   );
 }
 export const useAuth = () => useContext(Context);
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, signedOut } = useAuth();
   const location = useLocation();
   if (loading) return <div className="loading">Загружаем аккаунт…</div>;
   return user ? (
     children
   ) : (
     <Navigate
-      to="/login"
+      to={signedOut ? "/" : "/login"}
       replace
       state={{ from: location.pathname + location.search + location.hash }}
     />

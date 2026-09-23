@@ -1,3 +1,4 @@
+import { StudentHome } from "./Student";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpRight, Search, SlidersHorizontal, Plus } from "lucide-react";
@@ -238,6 +239,10 @@ function BusinessStart() {
   );
 }
 export function Dashboard() {
+  const { user } = useAuth();
+  return user?.role === "student" ? <StudentHome /> : <BusinessDashboard />;
+}
+function BusinessDashboard() {
   const { user } = useAuth();
   const business = user?.role === "business";
   const [offset, setOffset] = useState(0);

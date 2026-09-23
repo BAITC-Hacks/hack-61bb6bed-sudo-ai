@@ -51,6 +51,7 @@ class TeamManagement:
                 "name": row.name,
                 "description": row.description,
                 "owner_id": row.owner_id,
+                "open_to_join": row.open_to_join,
                 "skill_slugs": team.skill_slugs,
                 "members": [{"id": m.id, "name": m.name} for m in members],
             }

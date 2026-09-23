@@ -49,6 +49,7 @@ export interface Team {
   member_ids: string[];
 }
 export interface TeamDetail extends Team {
+  open_to_join: boolean;
   owner_id: string;
   members: { id: string; name: string }[];
 }

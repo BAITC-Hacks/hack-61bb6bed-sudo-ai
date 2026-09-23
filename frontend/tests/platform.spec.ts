@@ -14,6 +14,15 @@ async function register(page: Page, email: string, student = false) {
   await page
     .getByRole("button", { name: "Создать аккаунт", exact: true })
     .click();
+  if (student) {
+    await expect(page).toHaveURL(/student\/profile/);
+    await page.getByLabel("Бэкенд",{exact:true}).check();
+    await page.getByRole("button",{name:"Далее",exact:true}).click();
+    await page.getByLabel("Python",{exact:true}).check();
+    await page.getByRole("button",{name:"Далее",exact:true}).click();
+    await page.getByLabel("Учусь — ищу первый проект",{exact:true}).check();
+    await page.getByRole("button",{name:"Показать подходящие задачи"}).click();
+  }
   await expect(page).toHaveURL(/dashboard/);
 }
 test("real registration → challenge → proposal → selection", async ({
@@ -204,10 +213,10 @@ test("prefilled student demo logs into a student account", async ({ page }) => {
   await expect(page.getByLabel("Email", {exact:true})).toHaveValue("student.demo@example.com");
   await expect(page.getByLabel("Пароль", {exact:true})).toHaveValue("Sana-Demo-Student-2026");
   await page.getByRole("button", {name:"Войти в аккаунт",exact:true}).click();
-  await expect(page).toHaveURL(/dashboard/);
+  await expect(page).toHaveURL(/dashboard|student\/profile/);
   const user = await page.request.get("/api/v1/auth/me");
   expect(user.ok()).toBe(true);
   expect((await user.json()).role).toBe("student");
   await page.reload();
-  await expect(page).toHaveURL(/dashboard/);
+  await expect(page).toHaveURL(/dashboard|student\/profile/);
 });

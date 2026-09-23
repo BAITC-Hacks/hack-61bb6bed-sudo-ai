@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -52,6 +53,7 @@ class UserRow(Timestamps, Base):
     name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(254), unique=True)
     role: Mapped[Role] = mapped_column(enum_type(Role, "user_role"), index=True)
+    student_profile: Mapped[dict | None] = mapped_column(JSONB)
     password_hash: Mapped[str | None] = mapped_column(String(255))
 
 
@@ -60,6 +62,7 @@ class TeamRow(Timestamps, Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(120))
     description: Mapped[str] = mapped_column(Text, default="")
+    open_to_join: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
     owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
 
 
@@ -189,6 +192,7 @@ class AnswerRow(Base):
 
 
 class ProposalRow(Timestamps, Base):
+    business_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     __tablename__ = "proposals"
     __table_args__ = (
         UniqueConstraint("task_id", "team_id"),
