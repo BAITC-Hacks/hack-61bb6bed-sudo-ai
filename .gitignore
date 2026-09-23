@@ -1,0 +1,21 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+*.egg-info/
+
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local design context and generated previews
+.superdesign/
+artifacts/

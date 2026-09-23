@@ -1,7 +1,202 @@
-# hack-61bb6bed-sudo-ai
-Hackathon team repository for sudo AI
+# SanaChallenge AI
 
-Привет
-Привет 2
-Привет 3
-Привет 4
+Рабочая локальная платформа: бизнес формулирует задачу, улучшает карточку,
+публикует её; студенческая команда отправляет предложение, бизнес выбирает команду.
+План дальнейшей работы — [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+
+Реализованы FastAPI API, PostgreSQL 16, миграции Alembic, объяснимый рейтинг,
+AI-адаптер с fallback, история оценок и ответов, каталог, demo-пользователи,
+команды, рекомендации по навыкам и транзакционный выбор победителя.
+Также реализованы React/TypeScript-интерфейс, регистрация и вход, серверные
+сессии, профиль и смена пароля, кабинеты бизнеса и студентов, приглашения
+в команды и управление участниками. Подтверждение email и восстановление
+пароля пока не предусмотрены по решению пользователя.
+
+## Запуск
+
+Нужны Docker Engine и Docker Compose.
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec backend python -m scripts.seed_demo_data
+```
+
+- Платформа: [localhost:5173](http://localhost:5173)
+- Swagger: [localhost:8000/docs](http://localhost:8000/docs)
+- OpenAPI: [localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+- Liveness: [localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+- Readiness с проверкой схемы БД: [localhost:8000/api/v1/ready](http://localhost:8000/api/v1/ready)
+
+Compose ждёт готовности PostgreSQL и успешной миграции перед запуском API.
+База сохраняется в volume `postgres_data`, по умолчанию доступна только внутри
+Docker. API привязан к localhost. Изменить порт API можно через `API_PORT` в `.env`.
+Seed можно запускать повторно: он добавляет отсутствующие записи и не перезаписывает правки.
+
+```bash
+docker compose logs --tail=100 backend
+docker compose stop
+```
+
+## Аккаунты и команды
+
+Создайте аккаунт через интерфейс, выбрав роль «Бизнес» или «Студент».
+Пароль — 12–128 символов; в БД сохраняется Argon2id-хеш. Вход создаёт
+серверную сессию с HttpOnly-cookie; изменяющие запросы защищены CSRF-токеном.
+Смена пароля завершает все сессии. Попытки входа ограничиваются.
+
+Бизнес создаёт, улучшает и публикует задачи, рассматривает отклики и выбирает
+команду. Студенты создают команды, присоединяются по одноразовым приглашениям,
+отправляют предложения и отслеживают результат. Капитан управляет составом
+и может передать роль другому участнику.
+
+Demo identity по `X-Demo-User` выключена по умолчанию. Старый скрипт
+`scripts.smoke_demo` работает только при явном `DEMO_AUTH_ENABLED=true`
+в локальном окружении; production запрещает этот режим. Seed создаёт
+синтетические аккаунты без паролей — для входа регистрируйте новый аккаунт.
+
+## Сквозная проверка интерфейса
+
+При запущенном Docker Compose:
+
+```bash
+cd frontend
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+Тест регистрирует отдельные синтетические аккаунты бизнеса и студента,
+создаёт и публикует задачу, отправляет отклик, выбирает команду и проверяет
+сохранение сессии и повторный вход. Дополнительно проверяется мобильная
+навигация. Эти тесты оставляют созданные демонстрационные записи в БД.
+
+Проверены 39 backend-тестов, 2 браузерных теста, TypeScript/Vite build,
+Ruff lint/format. Контракт API: [docs/backend.md](docs/backend.md).
+
+## AI и качество
+
+Для реального AI укажите в `.env` `OPENAI_API_KEY` и `OPENAI_MODEL` — доступную
+вашему аккаунту модель с поддержкой Structured Outputs. Затем пересоздайте API:
+
+```bash
+docker compose up -d --force-recreate backend
+```
+
+Адаптер использует AsyncOpenAI и `responses.parse`, Pydantic-схему, timeout,
+ограниченные повторы и `store=False`. Формат сверён с
+[официальной документацией OpenAI](https://developers.openai.com/api/docs/guides/structured-outputs).
+Реальный вызов требует отдельной проверки с вашим ключом; автоматические тесты
+проверяют контракт через подставленные ответы и ошибки без внешних вызовов.
+
+Рейтинг рассчитывает backend: 20% за наличие полей, 80% за семантическую
+оценку. Пустые поля получают 0; критерии успеха и сроки без числовой конкретики
+ограничиваются базовыми баллами. Максимумы критериев: 15/15/15/15/10/10/10/5/5.
+
+При отсутствии настроек, таймауте, отказе или некорректном ответе AI сохраняются
+ручные данные и доступна базовая оценка `source=local_fallback`, максимум 40/100.
+Она оценивает заполнение, а не смысл. Demo-данные не получают выдуманные 90+ баллов.
+После ручного редактирования старая оценка сбрасывается; перед публикацией
+нужен анализ текущей версии, включая доступный offline-анализ.
+
+Matching пока использует пересечение навыков. Его процент не является
+вероятностью успеха команды. При отсутствии требуемых навыков возвращается 0
+с пояснением. Рекомендация никого автоматически не назначает.
+
+## Структура
+
+```text
+backend/app/
+  api/             HTTP, схемы, demo identity, зависимости
+  application/     сценарии и интерфейсы хранилища/AI
+  domain/          сущности, статусы, рейтинг и matching без I/O
+  infrastructure/  PostgreSQL repositories, unit of work, OpenAI
+  core/            конфигурация и логи
+backend/alembic/    версионированная схема БД
+backend/scripts/   seed и сквозная проверка
+backend/tests/     unit и PostgreSQL integration tests
+```
+
+Зависимости зафиксированы в `uv.lock`; `requirements.lock` экспортирован для
+Docker. Runtime образ использует Python 3.12 и непривилегированного пользователя.
+Для разработки поддерживаются Python 3.12–3.14.
+
+## Разработка и тесты
+
+Для локального Python-процесса откройте отдельный порт БД:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres
+cd backend
+uv sync --frozen
+export DATABASE_URL='postgresql+asyncpg://sana:sana_local_only@127.0.0.1:55439/sana'
+uv run alembic upgrade head
+uv run python -m scripts.seed_demo_data
+uv run uvicorn app.main:app --reload --port 8001
+```
+
+Если меняли PostgreSQL-настройки в `.env`, используйте соответствующий URL.
+При занятом порте 55439 укажите `POSTGRES_PORT` и измените URL.
+
+Unit-тесты не требуют БД:
+
+```bash
+uv run pytest -q -m 'not integration'
+uv run ruff check .
+uv run ruff format --check .
+```
+
+Интеграционные тесты используют отдельную базу, никогда основную:
+
+```bash
+# Из корня проекта, один раз:
+docker compose exec postgres createdb -U sana sana_test
+
+cd backend
+export TEST_DATABASE_URL='postgresql+asyncpg://sana:sana_local_only@127.0.0.1:55439/sana_test'
+DATABASE_URL="$TEST_DATABASE_URL" uv run alembic upgrade head
+uv run pytest -q
+```
+
+Каждый integration-тест очищает только указанную тестовую БД. Имя обязательно
+должно заканчиваться на `_test`. Без `TEST_DATABASE_URL` integration-тесты пропускаются.
+Проверены полный сценарий, приватность черновиков, права владельца/участника,
+дубликаты, конкурентные отклики/выбор, сброс старой оценки и устаревшие AI-ответы.
+
+Проверка схемы и отката выполняется только на тестовой БД:
+
+```bash
+DATABASE_URL="$TEST_DATABASE_URL" uv run alembic check
+DATABASE_URL="$TEST_DATABASE_URL" uv run alembic downgrade base
+DATABASE_URL="$TEST_DATABASE_URL" uv run alembic upgrade head
+```
+
+Обновление экспорта после изменения зависимостей:
+
+```bash
+uv lock
+uv export --frozen --no-dev --no-hashes --no-emit-project --output-file requirements.lock
+```
+
+## Ограничения текущего этапа
+
+NVIDIA и публичный deployment пока не настроены. Реальный OpenAI-вызов
+нужно проверить с ключом. Перед публичным запуском нужны HTTPS, лимиты
+AI-запросов и эксплуатационные настройки.
+Опубликованные карточки в первой версии неизменяемы. Интервью использует
+фиксированные вопросы, выбирая до трёх по наибольшим пробелам в оценке;
+свободный многошаговый чат не реализован. Ключи не входят в исходники и логи.
+
+## Локальный демонстрационный вход
+
+После выбора роли на первом экране открывается отдельная форма входа.
+Для бизнеса на localhost автоматически заполнены данные отдельного демо-аккаунта.
+Создать его в новой локальной БД (существующие аккаунты не изменяются):
+
+```bash
+docker compose exec -T backend python < backend/scripts/seed_login_demo.py
+```
+
+Email: `business.demo@example.com`, демонстрационный пароль: `Sana-Demo-Business-2026`.
+Это публичные тестовые данные. Скрипт запрещён при `APP_ENV=production`.
+Для студентов форма входа остаётся пустой; новая регистрация доступна по ссылке.
