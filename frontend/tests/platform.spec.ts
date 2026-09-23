@@ -1,4 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+test.beforeEach(async ({page}) => {
+  await page.route("**/api/v1/tasks/*/interview", route=>route.fulfill({json:{summary:"",questions:[],source:"local_fallback",warning:"Тест ручного заполнения"}}));
+});
 const password = "Sana-browser-test-2026";
 async function register(page: Page, email: string, student = false) {
   await page.goto("/register");
@@ -40,9 +43,13 @@ test("real registration → challenge → proposal → selection", async ({
     "Критерии успеха *": "Точность 80% на 100 тестовых примерах.",
     "Срок и объём работы *": "3 недели на MVP и проверку метрик.",
   };
-  for (const [label, value] of Object.entries(fields))
-    await bp.getByLabel(label, { exact: true }).fill(value);
+  const steps = ["Проблема бизнеса *", "Целевая аудитория", "Цель проекта *", "Ожидаемый результат *", "Критерии успеха *", "Ограничения", "Данные и ресурсы", "Срок и объём работы *", "Риски и безопасность", "Название задачи *"];
+  for (const label of steps) {
+    if(fields[label]) await bp.getByLabel(label, {exact:true}).fill(fields[label]);
+    await bp.getByRole("button", {name:"Далее",exact:true}).click();
+  }
   await bp.getByLabel("Python", { exact: true }).check();
+  await bp.getByRole("button", {name:"К проверке",exact:true}).click();
   await bp.getByRole("button", { name: "Оценить задачу", exact: true }).click();
   await expect(bp.getByRole("status")).toContainText("Карточка обновлена");
   await bp.getByRole("button", { name: "Опубликовать", exact: true }).click();
@@ -134,7 +141,7 @@ test("welcome role choice preserves selected role and fits mobile", async ({ pag
   await expect(page.getByRole("heading", { name: "Большие дела начинаются с вас." })).toBeVisible();
   await page.getByRole("link", {name: /02 \/ СТУДЕНТЫ/}).click();
   await expect(page).toHaveURL(/login\?role=student/);
-  await expect(page.getByLabel("Email", {exact:true})).toHaveValue("");
+  await expect(page.getByLabel("Email", {exact:true})).toHaveValue("student.demo@example.com");
   await page.goto("/");
   await page.getByRole("link", {name: /01 \/ БИЗНЕС/}).click();
   await expect(page).toHaveURL(/login\?role=business/);
@@ -162,4 +169,45 @@ test("prefilled business demo logs into a real account", async ({ page }) => {
   await page.getByRole("button", {name:"Войти в аккаунт",exact:true}).click();
   await expect(page).toHaveURL(/dashboard/);
   await expect(page.getByRole("link",{name:"Демо Бизнес Бизнес"})).toBeVisible();
+});
+
+test("task deck saves answers, navigates back, and has no XP panel", async ({page}) => {
+  await register(page, `deck-${Date.now()}@example.com`);
+  await expect(page.getByRole("region",{name:"Ваш прогресс"})).toHaveCount(0);
+  await page.getByLabel("В чём ваша задача?").fill("Тестовая задача пошагового редактора для проверки сохранения.");
+  await page.getByRole("button",{name:"Создать черновик",exact:true}).click();
+  await page.getByRole("button",{name:"Продолжить без AI",exact:true}).click();
+  await page.getByLabel("Проблема бизнеса *",{exact:true}).fill("Проверка колоды");
+  await page.getByRole("button",{name:"Далее",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Кто будет пользоваться решением?"})).toBeVisible();
+  await page.getByRole("button",{name:"Назад",exact:true}).click();
+  await expect(page.getByLabel("Проблема бизнеса *",{exact:true})).toHaveValue("Проверка колоды");
+  await page.reload();
+  await page.getByRole("button",{name:"Продолжить без AI",exact:true}).click();
+  await expect(page.getByLabel("Проблема бизнеса *",{exact:true})).toHaveValue("Проверка колоды");
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  for(let i=0;i<10;i++) await page.getByRole("button",{name:"Далее",exact:true}).click();
+  await page.getByLabel("Python",{exact:true}).check();
+  await page.getByRole("button",{name:"К проверке",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Проверьте вашу задачу"})).toBeVisible();
+  await page.getByRole("button",{name:/Навыки команды/}).click();
+  await expect(page.getByLabel("Python",{exact:true})).toBeChecked();
+  await page.getByRole("button",{name:"Сохранить и выйти"}).click();
+  await expect(page).toHaveURL(/dashboard/);
+});
+
+
+test("prefilled student demo logs into a student account", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", {name: /02 \/ СТУДЕНТЫ/}).click();
+  await expect(page.getByLabel("Email", {exact:true})).toHaveValue("student.demo@example.com");
+  await expect(page.getByLabel("Пароль", {exact:true})).toHaveValue("Sana-Demo-Student-2026");
+  await page.getByRole("button", {name:"Войти в аккаунт",exact:true}).click();
+  await expect(page).toHaveURL(/dashboard/);
+  const user = await page.request.get("/api/v1/auth/me");
+  expect(user.ok()).toBe(true);
+  expect((await user.json()).role).toBe("student");
+  await page.reload();
+  await expect(page).toHaveURL(/dashboard/);
 });

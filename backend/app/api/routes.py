@@ -163,3 +163,10 @@ async def recommendations(
 ):
     items, total = await svc.recommendations(actor, team_id, limit, offset)
     return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/me/progress", tags=["accounts"])
+async def progress(request: Request, actor: Actor):
+    from app.infrastructure.progress import account_progress
+
+    return await account_progress(request.app.state.accounts.factory, actor)

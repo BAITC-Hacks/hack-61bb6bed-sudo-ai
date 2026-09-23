@@ -19,10 +19,16 @@ export function AuthPage({ register = false }: { register?: boolean }) {
       ? "student"
       : "business",
   );
-  const demoBusiness =
+  const selectedRole = new URLSearchParams(location.search).get("role");
+  const demoLogin =
     !register &&
-    new URLSearchParams(location.search).get("role") === "business" &&
+    ["business", "student"].includes(selectedRole || "") &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const demoAccount = demoLogin
+    ? selectedRole === "student"
+      ? { email: "student.demo@example.com", password: "Sana-Demo-Student-2026", label: "студента" }
+      : { email: "business.demo@example.com", password: "Sana-Demo-Business-2026", label: "бизнеса" }
+    : undefined;
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent<HTMLFormElement>) => {
@@ -58,12 +64,12 @@ export function AuthPage({ register = false }: { register?: boolean }) {
         <p className="muted">
           {register
             ? "Выберите свою роль и присоединяйтесь к платформе."
-            : demoBusiness
-              ? "Демо-аккаунт бизнеса. Данные уже заполнены — можно войти."
+            : demoAccount
+              ? `Демо-аккаунт ${demoAccount.label}. Данные уже заполнены — можно войти.`
               : "Введите email и пароль, чтобы продолжить."}
         </p>
         <ErrorBox message={error} />
-        <form onSubmit={submit}>
+        <form key={`${register}-${selectedRole}`} onSubmit={submit}>
           {register && (
             <>
               <div className="role-picker">
@@ -100,7 +106,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           <FormField label="Email">
             <input
               name="email"
-              defaultValue={demoBusiness ? "business.demo@example.com" : ""}
+              defaultValue={demoAccount?.email || ""}
               type="email"
               autoComplete="email"
               required
@@ -118,7 +124,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           >
             <input
               name="password"
-              defaultValue={demoBusiness ? "Sana-Demo-Business-2026" : ""}
+              defaultValue={demoAccount?.password || ""}
               type="password"
               autoComplete={register ? "new-password" : "current-password"}
               required

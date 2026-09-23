@@ -1,3 +1,4 @@
+import { TaskDeck, deckFields } from "../components/TaskDeck";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -108,6 +109,8 @@ export function Builder() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [step, setStep] = useState(0);
+  const [reviewTab, setReviewTab] = useState<"brief" | "ai">("brief");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   useEffect(() => {
     if (load.data) {
@@ -182,6 +185,7 @@ export function Builder() {
       load.setData(result);
       if (field) setAnswers((a) => ({ ...a, [field]: "" }));
       setMessage("Карточка обновлена.");
+      setReviewTab("ai");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -190,23 +194,30 @@ export function Builder() {
   }
   const assessment = dirty ? null : task.assessment;
   return (
-    <>
-      <Link className="back-link" to="/dashboard">
-        <ArrowLeft size={16} />
-        Мои задачи
-      </Link>
-      <Heading
-        eyebrow="КОНСТРУКТОР ЗАДАЧИ"
-        title={brief.title || "Сделаем вашу идею понятной"}
-        subtitle="Уточните детали, оцените готовность и опубликуйте задачу."
-        action={
-          <span className="badge">
-            {dirty
-              ? "Есть несохранённые изменения"
-              : "Черновик · виден только вам"}
-          </span>
-        }
-      />
+    <div className="builder-fullscreen">
+      <header className="deck-header">
+        <Link to="/" className="welcome-brand">
+          <span className="liquid-mark">S</span>SanaChallenge
+        </Link>
+        <button
+          className="btn secondary"
+          disabled={!!busy}
+          onClick={async () => {
+            setBusy("save");
+            setError("");
+            try {
+              await save();
+              nav("/dashboard");
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setBusy("");
+            }
+          }}
+        >
+          Сохранить и выйти
+        </button>
+      </header>
       <ErrorBox message={error} />
       {message && (
         <div className="alert success" role="status">
@@ -214,202 +225,232 @@ export function Builder() {
           {message}
         </div>
       )}
-      <div className="builder-toolbar">
-        <button
-          className="btn secondary"
-          disabled={!!busy}
-          onClick={() => action("save")}
-        >
-          <Save size={17} />
-          {busy === "save" ? "Сохраняем…" : "Сохранить"}
-        </button>
-        <button
-          className="btn secondary"
-          disabled={!!busy}
-          onClick={() => action("analyze")}
-        >
-          <Sparkles size={17} />
-          {busy === "analyze" ? "Анализируем…" : "Оценить задачу"}
-        </button>
-        <button
-          className="btn secondary"
-          disabled={!!busy}
-          onClick={() => action("improve")}
-        >
-          <Sparkles size={17} />
-          {busy === "improve" ? "Улучшаем…" : "Улучшить с AI"}
-        </button>
-        <button
-          className="btn"
-          disabled={!!busy || !assessment}
-          onClick={() => action("publish")}
-        >
-          <Send size={17} />
-          {busy === "publish" ? "Публикуем…" : "Опубликовать"}
-        </button>
-      </div>
-      <div className="builder-grid">
-        <section className="panel">
-          <h2>Карточка задачи</h2>
-          <p className="muted small-text">
-            Опишите только известные факты. Поля можно заполнить постепенно.
-          </p>
-          {(Object.keys(labels) as BriefField[]).map((field) => (
-            <FormField
-              key={field}
-              label={
-                labels[field] +
-                ([
-                  "title",
-                  "problem",
-                  "goal",
-                  "deliverable",
-                  "success_criteria",
-                  "timeline",
-                ].includes(field)
-                  ? " *"
-                  : "")
-              }
+      {step <= deckFields.length ? (
+        <TaskDeck
+          taskId={id!}
+          revision={task.revision!}
+          brief={brief}
+          slugs={slugs}
+          skills={skills.data}
+          skillsError={skills.error}
+          busy={!!busy}
+          step={step}
+          onStep={setStep}
+          onBrief={(value) => {
+            setBrief(value);
+            setDirty(true);
+          }}
+          onSkills={(value) => {
+            setSlugs(value);
+            setDirty(true);
+          }}
+          onSave={save}
+        />
+      ) : (
+        <div className="deck-review">
+          <Heading
+            title="Проверьте вашу задачу"
+            subtitle="1. Проверьте описание · 2. Получите оценку · 3. Опубликуйте"
+          />
+          <div className="builder-toolbar">
+            <button
+              className="btn secondary"
+              disabled={!!busy}
+              onClick={() => action("save")}
             >
-              {field === "title" ? (
-                <input
-                  disabled={!!busy}
-                  value={brief[field]}
-                  maxLength={200}
-                  onChange={(e) => {
-                    setBrief({ ...brief, [field]: e.target.value });
-                    setDirty(true);
-                  }}
-                />
-              ) : (
-                <textarea
-                  disabled={!!busy}
-                  rows={field === "problem" ? 4 : 2}
-                  maxLength={8000}
-                  value={brief[field]}
-                  onChange={(e) => {
-                    setBrief({ ...brief, [field]: e.target.value });
-                    setDirty(true);
-                  }}
-                />
-              )}
-            </FormField>
-          ))}
-          <div className="field">
-            <span>Какие навыки нужны команде?</span>
-            <div className="skill-picker">
-              {skills.data?.map((s) => (
-                <label key={s.slug}>
-                  <input
-                    type="checkbox"
-                    disabled={!!busy}
-                    checked={slugs.includes(s.slug)}
-                    onChange={(e) => {
-                      setSlugs(
-                        e.target.checked
-                          ? [...slugs, s.slug]
-                          : slugs.filter((x) => x !== s.slug),
-                      );
-                      setDirty(true);
-                    }}
-                  />
-                  {s.name}
-                </label>
-              ))}
-            </div>
+              <Save size={17} />
+              {busy === "save" ? "Сохраняем…" : "Сохранить"}
+            </button>
+            <button
+              className="btn secondary"
+              disabled={!!busy}
+              onClick={() => action("analyze")}
+            >
+              <Sparkles size={17} />
+              {busy === "analyze" ? "Анализируем…" : "Оценить задачу"}
+            </button>
+            <button
+              className="btn secondary"
+              disabled={!!busy}
+              onClick={() => action("improve")}
+            >
+              <Sparkles size={17} />
+              {busy === "improve" ? "Улучшаем…" : "Улучшить с AI"}
+            </button>
+            <button
+              className="btn"
+              disabled={!!busy || !assessment}
+              onClick={() => action("publish")}
+            >
+              <Send size={17} />
+              {busy === "publish" ? "Публикуем…" : "Опубликовать"}
+            </button>
           </div>
-          <p className="muted small-text">
-            * Обязательно для публикации. После изменений оцените карточку ещё
-            раз.
-          </p>
-        </section>
-        <aside className="builder-aside">
-          <section className="panel score-panel">
-            <div className="eyebrow">ГОТОВНОСТЬ ЗАДАЧИ</div>
-            <div className="big-score">
-              {assessment?.total ?? "—"}
-              <small>/ 100</small>
-            </div>
-            <span className="badge">{assessment?.level || "Нужна оценка"}</span>
-            <p className="muted small-text">
-              Чем понятнее задача, тем легче команде предложить решение.
-            </p>
-            {assessment?.warning && (
-              <div className="alert info">{assessment.warning}</div>
-            )}
-            {assessment && (
-              <div className="criteria">
-                {Object.entries(assessment.scores).map(([key, score]) => (
-                  <div key={key} title={score.reason}>
-                    <div>
-                      <span>{labels[key as BriefField]}</span>
-                      <strong>
-                        {score.score}/{score.maximum}
-                      </strong>
-                    </div>
-                    <div className="meter">
-                      <span
-                        style={{
-                          width: `${(score.score / score.maximum) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <small>{score.reason}</small>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-          {assessment?.next_questions.length ? (
-            <section className="panel">
-              <h3>Уточним детали</h3>
-              <p className="muted small-text">
-                Ответьте на вопросы с наибольшим влиянием на качество.
-              </p>
-              {assessment.next_questions.map((q) => (
-                <form
-                  key={q.field}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    action("answer", q.field);
-                  }}
-                >
-                  <FormField label={q.question}>
-                    <textarea
-                      required
-                      rows={3}
-                      value={answers[q.field] || ""}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [q.field]: e.target.value })
-                      }
-                      maxLength={8000}
-                    />
-                  </FormField>
-                  <button disabled={!!busy} className="btn secondary small">
-                    Сохранить ответ
+          <div className="review-tabs" aria-label="Раздел проверки">
+            <button
+              aria-pressed={reviewTab === "brief"}
+              onClick={() => setReviewTab("brief")}
+            >
+              Описание задачи
+            </button>
+            <button
+              aria-pressed={reviewTab === "ai"}
+              onClick={() => setReviewTab("ai")}
+            >
+              Оценка AI {assessment ? `· ${assessment.total}/100` : ""}
+            </button>
+          </div>
+          <div className="review-content">
+            {reviewTab === "brief" && (
+              <section className="panel deck-summary">
+                <h2>Ваши ответы</h2>
+                {deckFields.map((field, index) => (
+                  <button
+                    key={field}
+                    className="summary-answer"
+                    disabled={!!busy}
+                    onClick={() => setStep(index)}
+                  >
+                    <span>{labels[field]}</span>
+                    <strong>{brief[field] || "Не заполнено"}</strong>
+                    <small>Изменить ↗</small>
                   </button>
-                </form>
-              ))}
-            </section>
-          ) : null}
-          {!!history.data?.length && (
-            <section className="panel">
-              <h3>История улучшений</h3>
-              <div className="history">
-                {history.data.map((h) => (
-                  <div key={h.revision}>
-                    <span>Версия {h.revision}</span>
-                    <strong>
-                      {h.score}
-                      <small>/100</small>
-                    </strong>
-                  </div>
                 ))}
-              </div>
-            </section>
-          )}
-        </aside>
-      </div>
-    </>
+                <button
+                  className="summary-answer"
+                  disabled={!!busy}
+                  onClick={() => setStep(deckFields.length)}
+                >
+                  <span>Навыки команды</span>
+                  <strong>
+                    {slugs
+                      .map(
+                        (slug) =>
+                          skills.data?.find((s) => s.slug === slug)?.name ||
+                          slug,
+                      )
+                      .join(", ") || "Не выбраны"}
+                  </strong>
+                  <small>Изменить ↗</small>
+                </button>
+              </section>
+            )}
+            {reviewTab === "ai" && (
+              <aside className="review-analysis">
+                <section className="panel score-panel">
+                  <div className="eyebrow">ГОТОВНОСТЬ ЗАДАЧИ</div>
+                  <div className="big-score">
+                    {assessment?.total ?? "—"}
+                    <small>/ 100</small>
+                  </div>
+                  <span className="badge">
+                    {assessment
+                      ? {
+                          Draft: "Нужно уточнить",
+                          Basic: "Базовое описание",
+                          Ready: "Готова к работе",
+                          Strong: "Хорошо проработана",
+                          Excellent: "Отличное описание",
+                        }[assessment.level] || assessment.level
+                      : "Нажмите «Оценить задачу»"}
+                  </span>
+                  <p>
+                    {assessment
+                      ? assessment.source === "openai"
+                        ? "Оценка AI по 9 критериям. Ниже — что можно уточнить."
+                        : "Базовая оценка заполнения без анализа смысла."
+                      : "AI проверит полноту описания и предложит уточнения."}
+                  </p>
+                  {assessment?.warning && (
+                    <div className="alert info">{assessment.warning}</div>
+                  )}
+                  {assessment && (
+                    <details className="review-details">
+                      <summary>Подробные баллы по критериям</summary>
+                      <div className="criteria">
+                        {Object.entries(assessment.scores).map(
+                          ([key, score]) => (
+                            <div key={key} title={score.reason}>
+                              <div>
+                                <span>{labels[key as BriefField]}</span>
+                                <strong>
+                                  {score.score}/{score.maximum}
+                                </strong>
+                              </div>
+                              <div className="meter">
+                                <span
+                                  style={{
+                                    width: `${(score.score / score.maximum) * 100}%`,
+                                  }}
+                                />
+                              </div>
+                              <small>{score.reason}</small>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </details>
+                  )}
+                </section>
+                {assessment?.next_questions.length ? (
+                  <section className="panel">
+                    <h3>Уточним детали</h3>
+                    <p className="muted small-text">
+                      Ответьте на вопросы с наибольшим влиянием на качество.
+                    </p>
+                    {assessment.next_questions.map((q) => (
+                      <form
+                        key={q.field}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          action("answer", q.field);
+                        }}
+                      >
+                        <FormField label={q.question}>
+                          <textarea
+                            required
+                            rows={3}
+                            value={answers[q.field] || ""}
+                            onChange={(e) =>
+                              setAnswers({
+                                ...answers,
+                                [q.field]: e.target.value,
+                              })
+                            }
+                            maxLength={8000}
+                          />
+                        </FormField>
+                        <button
+                          disabled={!!busy}
+                          className="btn secondary small"
+                        >
+                          Сохранить ответ
+                        </button>
+                      </form>
+                    ))}
+                  </section>
+                ) : null}
+                {!!history.data?.length && (
+                  <details className="panel review-details">
+                    <summary>История оценок</summary>
+                    <div className="history">
+                      {history.data.map((h) => (
+                        <div key={h.revision}>
+                          <span>Версия {h.revision}</span>
+                          <strong>
+                            {h.score}
+                            <small>/100</small>
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </aside>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

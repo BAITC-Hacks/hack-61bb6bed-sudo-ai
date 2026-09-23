@@ -974,6 +974,636 @@ textarea::placeholder {
     padding: 22px;
   }
 }
-.shell .task-card { min-width: 0; overflow-wrap: anywhere; }
-.shell .card-bottom > span { min-width: 0; white-space: normal; }
-@media(max-width:700px) { .shell .task-grid { grid-template-columns: minmax(0,1fr); } }
+.shell .task-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.shell .card-bottom > span {
+  min-width: 0;
+  white-space: normal;
+}
+@media (max-width: 700px) {
+  .shell .task-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.progress-panel {
+  padding: 24px;
+  margin: 24px 0;
+  border: 1px solid white;
+  border-radius: 24px;
+  background: linear-gradient(125deg, #ffffffe8, #ffffff99);
+  box-shadow:
+    inset 0 1px 2px white,
+    0 10px 25px #70283f08;
+}
+.progress-heading,
+.progress-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.progress-heading {
+  justify-content: space-between;
+  color: #70283f;
+}
+.progress-heading h2 {
+  font-size: 20px;
+  margin: 0;
+  color: #302536;
+}
+.progress-heading h2 small {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #625568;
+}
+.xp-track {
+  height: 7px;
+  border-radius: 9px;
+  background: #e9e0e7;
+  margin-top: 18px;
+  overflow: hidden;
+}
+.xp-track > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #aa627c, #70283f);
+  border-radius: 9px;
+}
+.shell .progress-panel p {
+  font-size: 13px;
+  margin: 8px 0 16px;
+}
+.achievement-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  background: #ffffff99;
+  border: 1px solid #e6dfe6;
+  border-radius: 14px;
+  font-size: 13px;
+  color: #62586a;
+}
+.achievement > span {
+  flex: 1;
+}
+.achievement small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.achievement strong {
+  font-size: 12px;
+}
+.achievement.earned {
+  border-color: #d7b6c4;
+  color: #70283f;
+  background: #f8eff4;
+}
+.progress-note {
+  display: block;
+  font-size: 12px;
+  color: #62586a;
+  margin-top: 12px;
+}
+.builder-fullscreen {
+  min-height: 100dvh;
+  padding: 24px 40px 60px;
+  background:
+    radial-gradient(ellipse at 75% 25%, #e6cbd966, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, #cddfe57a, transparent 45%), #f4f3f5;
+  color: #302637;
+}
+.deck-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1280px;
+  margin: auto;
+}
+.task-deck {
+  max-width: 840px;
+  margin: 42px auto 0;
+}
+.deck-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  color: #63516a;
+  font-size: 13px;
+}
+.deck-meter {
+  height: 5px;
+  background: #e6dce5;
+  border-radius: 9px;
+  overflow: hidden;
+  margin: 14px 0 34px;
+}
+.deck-meter > span {
+  display: block;
+  height: 100%;
+  background: #70283f;
+  transition: width 0.4s;
+}
+.deck-stack {
+  position: relative;
+  perspective: 1400px;
+  margin: 0 12px;
+}
+.deck-under {
+  position: absolute;
+  inset: 8px 4px -8px;
+  background: linear-gradient(120deg, #fff, #e8dde7);
+  border: 1px solid white;
+  border-radius: 30px;
+  box-shadow: 0 12px 25px #51354a0a;
+  pointer-events: none;
+}
+.deck-under.first {
+  transform: rotate(-2deg) translateY(7px);
+}
+.deck-under.second {
+  transform: rotate(2.5deg) translateY(14px);
+}
+.deck-card {
+  position: relative;
+  z-index: 1;
+  padding: 34px 40px;
+  border: 1px solid white;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #fffffff5, #f8f3f8ed);
+  box-shadow:
+    inset 0 2px 2px white,
+    0 20px 60px #59304c12;
+  transform-origin: 50% 85%;
+  animation: shuffle-card 0.62s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.deck-card.reverse {
+  animation-name: shuffle-back;
+}
+.deck-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #795b70;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 26px;
+}
+.deck-card-top strong {
+  font-size: 24px;
+  letter-spacing: -1px;
+  color: #70283f;
+}
+.deck-card h1 {
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.22;
+  margin-bottom: 14px;
+  outline: none;
+}
+.deck-card > p {
+  font-size: 15px;
+  color: #675b6d;
+  margin-bottom: 28px;
+}
+.deck-card .field label {
+  font-size: 14px;
+  color: #44344c;
+}
+.deck-card input,
+.deck-card textarea {
+  font-size: 17px;
+  padding: 18px;
+  background: #ffffffc9;
+  border-color: #e5dbe5;
+  border-radius: 16px;
+}
+.deck-card textarea {
+  min-height: 170px;
+}
+.deck-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 30px;
+}
+.deck-controls > span {
+  font-size: 11px;
+  color: #6d5e73;
+  text-align: center;
+}
+.deck-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 180px;
+  align-content: start;
+}
+.deck-skills label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #dfd1df;
+  border-radius: 14px;
+  background: white;
+  cursor: pointer;
+}
+.deck-skills label.selected {
+  background: #f3e2ec;
+  border-color: #9d627b;
+  color: #70283f;
+}
+.deck-skills input {
+  width: 17px;
+  height: 17px;
+  accent-color: #70283f;
+}
+.deck-review {
+  max-width: 1180px;
+  margin: 40px auto;
+}
+.deck-summary .summary-answer {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid #e5dce5;
+  background: transparent;
+  padding: 18px 0;
+}
+.summary-answer > span,
+.summary-answer > strong,
+.summary-answer > small {
+  display: block;
+}
+.summary-answer > span {
+  font-size: 13px;
+  color: #705c77;
+  margin-bottom: 6px;
+}
+.summary-answer > strong {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #342939;
+}
+.summary-answer > small {
+  margin-top: 8px;
+  color: #70283f;
+}
+.builder-fullscreen > .alert {
+  max-width: 840px;
+  margin: 20px auto;
+}
+.deck-review .builder-toolbar {
+  position: static;
+  flex-wrap: wrap;
+}
+.deck-review .criteria small {
+  font-size: 13px;
+  color: #64566e;
+}
+@keyframes shuffle-card {
+  0% {
+    opacity: 0;
+    transform: translateX(100px) translateY(24px) rotate(12deg) rotateY(-12deg)
+      scale(0.94);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(-12px) translateY(-14px) rotate(-3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes shuffle-back {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px) translateY(24px) rotate(-12deg) rotateY(12deg)
+      scale(0.94);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(12px) translateY(-14px) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 700px) {
+  .builder-fullscreen {
+    padding: 20px 16px 50px;
+  }
+  .deck-header .welcome-brand {
+    font-size: 17px;
+  }
+  .deck-header .btn {
+    padding: 10px;
+    font-size: 12px;
+  }
+  .task-deck {
+    margin-top: 30px;
+  }
+  .deck-stack {
+    margin: 0 6px;
+  }
+  .deck-card {
+    padding: 24px 20px;
+  }
+  .deck-controls {
+    flex-wrap: wrap;
+  }
+  .deck-controls > span {
+    order: 3;
+    width: 100%;
+  }
+  .deck-progress {
+    font-size: 11px;
+  }
+  .deck-card textarea {
+    min-height: 180px;
+  }
+  .deck-skills label {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-card,
+  .deck-card.reverse {
+    animation: none;
+  }
+  .deck-meter > span {
+    transition: none;
+  }
+}
+/* Keep animated cards inside the viewport without clipping vertical content. */
+.builder-fullscreen {
+  overflow-x: clip;
+}
+.ai-deck-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  color: #63455b;
+  font-size: 14px;
+}
+.ai-deck-status button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #70283f;
+  text-decoration: underline;
+}
+.card-coach {
+  border: 1px solid #e4d4df;
+  border-radius: 18px;
+  background: #f8f2f6;
+  padding: 20px;
+  margin-top: 22px;
+  color: #392c3e;
+}
+.coach-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.coach-top > strong {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 15px;
+}
+.card-coach p,
+.card-coach li {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #46364c;
+}
+.card-coach ul {
+  padding-left: 22px;
+}
+.card-coach > small {
+  display: block;
+  margin-top: 16px;
+  color: #67546c;
+  font-size: 12px;
+}
+.coach-extra {
+  font-size: 14px;
+  display: block;
+  margin: 16px 0;
+}
+.deck-card .coach-extra textarea {
+  min-height: 90px;
+  font-size: 15px;
+  margin-top: 8px;
+}
+.coach-suggestion {
+  margin-top: 18px;
+  padding: 18px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e6dce5;
+}
+.coach-suggestion > span {
+  font-size: 13px;
+  color: #70283f;
+  font-weight: 600;
+}
+.coach-suggestion p {
+  white-space: pre-wrap;
+}
+.deck-review {
+  max-width: 980px;
+}
+.deck-review .page-heading h1 {
+  font-size: 34px;
+  color: #211b28;
+}
+.deck-review .page-heading p {
+  font-size: 16px;
+  color: #5b4f65;
+}
+.deck-review .btn {
+  font-size: 15px;
+  padding: 13px 20px;
+}
+.review-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 26px 0 20px;
+  border-bottom: 1px solid #d9cfdc;
+  padding-bottom: 12px;
+}
+.review-tabs button {
+  border: 0;
+  border-radius: 12px;
+  background: #ffffffb3;
+  color: #4b3c55;
+  padding: 14px 22px;
+  font-size: 16px;
+}
+.review-tabs button[aria-pressed="true"] {
+  background: #70283f;
+  color: white;
+}
+.review-content .panel {
+  padding: 30px;
+  background: #fffffff0;
+  border: 1px solid white;
+  border-radius: 22px;
+}
+.review-content h2,
+.review-content h3 {
+  font-size: 24px;
+  color: #2b2133;
+}
+.deck-summary .summary-answer {
+  padding: 22px 0;
+}
+.deck-summary .summary-answer > span {
+  font-size: 15px;
+  font-weight: 600;
+  color: #5a4564;
+}
+.deck-summary .summary-answer > strong {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #28212e;
+}
+.deck-summary .summary-answer > small {
+  font-size: 14px;
+}
+.review-analysis {
+  display: grid;
+  gap: 20px;
+}
+.review-analysis .score-panel {
+  text-align: left;
+}
+.review-analysis .big-score {
+  color: #70283f;
+  font-size: 58px;
+  text-align: left;
+}
+.review-analysis .big-score small {
+  font-size: 20px;
+  color: #64576c;
+}
+.review-analysis .badge {
+  font-size: 14px;
+  color: #4d3458;
+  background: #f0e5ee;
+}
+.review-analysis p,
+.review-analysis .field label {
+  font-size: 16px;
+  color: #4a3b54;
+  line-height: 1.65;
+}
+.review-analysis textarea {
+  font-size: 17px;
+  color: #2c2233;
+}
+.review-analysis .criteria > div > div > span,
+.review-analysis .criteria > div > div > strong {
+  font-size: 15px;
+  color: #45344f;
+}
+.review-analysis .criteria small {
+  display: block;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #5b4865;
+}
+.review-analysis .criteria > div {
+  padding: 18px 0;
+}
+.review-analysis form + form {
+  border-top: 1px solid #e4dce7;
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.review-details summary {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #53355d;
+  padding: 12px 0;
+}
+.review-details .history {
+  font-size: 15px;
+}
+.review-details .history span,
+.review-details .history strong {
+  font-size: 15px;
+  color: #5b4865;
+}
+@media (max-width: 700px) {
+  .coach-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .card-coach {
+    padding: 16px;
+  }
+  .review-tabs button {
+    font-size: 14px;
+    padding: 12px;
+  }
+  .review-content .panel {
+    padding: 22px;
+  }
+  .deck-review .page-heading h1 {
+    font-size: 29px;
+  }
+  .deck-review .builder-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .deck-review .btn {
+    font-size: 13px;
+    padding: 12px;
+  }
+  .deck-summary .summary-answer > strong {
+    font-size: 16px;
+  }
+}
+
+/* Wait for personal questions before revealing the interview. */
+.deck-preparation {
+  max-width: 760px;
+  margin: clamp(40px, 12vh, 140px) auto;
+  padding: clamp(28px, 6vw, 64px);
+  text-align: center;
+  background: rgba(255, 255, 255, .85);
+  border: 1px solid white;
+  border-radius: 32px;
+  box-shadow: 0 24px 70px rgba(70, 32, 52, .08);
+}
+.deck-preparation h1 { font-size: clamp(26px, 4vw, 38px); color: #302735; line-height: 1.2; }
+.deck-preparation p { font-size: 18px; line-height: 1.6; color: #574d60; }
+.deck-preparation-icon { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 28px; border-radius: 26px; background: #f3e6ed; color: #70283f; }
+.deck-preparation-icon.is-pending { animation: preparation-pulse 1.8s ease-in-out infinite; }
+.deck-preparation-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+@keyframes preparation-pulse { 50% { transform: translateY(-6px) rotate(8deg); box-shadow: 0 8px 30px #70283f20; } }
+@media (prefers-reduced-motion: reduce) { .deck-preparation-icon.is-pending { animation: none; } }

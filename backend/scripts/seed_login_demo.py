@@ -17,15 +17,16 @@ async def main():
         raise RuntimeError("Demo login seed is only available outside production")
     engine, factory = create_database(settings.database_url)
     try:
-        async with factory() as session:
-            exists = await session.scalar(
-                select(UserRow.id).where(UserRow.email == "business.demo@example.com")
-            )
-        if not exists:
-            await Accounts(factory, settings.session_days).register(
-                "Демо Бизнес", "business.demo@example.com", "Sana-Demo-Business-2026", Role.BUSINESS
-            )
-        print("Local business demo account ready (existing accounts unchanged).")
+        accounts = (
+            ("Демо Бизнес", "business.demo@example.com", "Sana-Demo-Business-2026", Role.BUSINESS),
+            ("Демо Студент", "student.demo@example.com", "Sana-Demo-Student-2026", Role.STUDENT),
+        )
+        for name, email, password, role in accounts:
+            async with factory() as session:
+                exists = await session.scalar(select(UserRow.id).where(UserRow.email == email))
+            if not exists:
+                await Accounts(factory, settings.session_days).register(name, email, password, role)
+        print("Local business and student demo accounts ready (existing accounts unchanged).")
     finally:
         await engine.dispose()
 

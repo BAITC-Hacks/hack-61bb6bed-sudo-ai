@@ -148,6 +148,7 @@ class TaskRow(Timestamps, Base):
     quality_level: Mapped[str] = mapped_column(String(16), default="Draft")
     revision: Mapped[int] = mapped_column(Integer, default=1)
     assessment_json: Mapped[dict | None] = mapped_column(JSONB)
+    interview_plan_json: Mapped[dict | None] = mapped_column(JSONB)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

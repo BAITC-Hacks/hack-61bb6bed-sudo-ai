@@ -25,12 +25,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             path="register"
             element={<AuthPage key="register" register />}
           />
+          <Route path="tasks/:id/edit" element={protectedPage(<Builder />)} />
           <Route element={<Layout />}>
             <Route path="catalog" element={<Explore />} />
             <Route path="dashboard" element={protectedPage(<Dashboard />)} />
             <Route path="profile" element={protectedPage(<Profile />)} />
             <Route path="tasks/new" element={protectedPage(<NewTask />)} />
-            <Route path="tasks/:id/edit" element={protectedPage(<Builder />)} />
             <Route path="tasks/:id" element={<TaskDetail />} />
             <Route path="teams" element={protectedPage(<Teams />)} />
             <Route path="teams/:id" element={protectedPage(<TeamPage />)} />

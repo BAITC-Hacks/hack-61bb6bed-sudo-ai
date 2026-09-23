@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException
 
 from app.api.auth import router as auth_router
+from app.api.interview import router as interview_router
 from app.api.routes import router
 from app.api.teams import router as teams_router
 from app.application.service import ChallengeService
@@ -19,6 +20,7 @@ from app.domain.entities import DomainError
 from app.infrastructure.accounts import Accounts
 from app.infrastructure.ai import OpenAIAnalyzer
 from app.infrastructure.db.session import PostgresUnitOfWork, create_database
+from app.infrastructure.interview import InterviewAI
 from app.infrastructure.teams import TeamManagement
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,9 @@ def create_app(settings: Settings | None = None, analyzer=None) -> FastAPI:
             AsyncOpenAI(api_key=key, timeout=settings.ai_timeout_seconds, max_retries=1)
             if key
             else None
+        )
+        app.state.interview = InterviewAI(
+            client, settings.openai_model, settings.ai_timeout_seconds
         )
         app.state.settings = settings
         app.state.engine = engine
@@ -119,6 +124,7 @@ def create_app(settings: Settings | None = None, analyzer=None) -> FastAPI:
         return error_response("internal_error", "Внутренняя ошибка сервера.", 500)
 
     app.include_router(router)
+    app.include_router(interview_router)
     app.include_router(auth_router)
     app.include_router(teams_router)
     return app
