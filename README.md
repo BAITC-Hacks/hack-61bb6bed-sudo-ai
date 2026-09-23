@@ -1,8 +1,17 @@
-# SanaChallenge AI
+<p align="center">
+  <img src="docs/assets/sanachallenge-logo.png" alt="SanaChallenge AI" width="335" height="83" />
+</p>
 
-**Помогаем бизнесу описать задачу, а студентам — найти проект и команду.**
+<p align="center">
+  <strong>Помогаем бизнесу описать задачу, а студентам — найти проект и команду.</strong>
+</p>
 
-[Репозиторий команды](https://github.com/BAITC-Hacks/hack-61bb6bed-sudo-ai) · HackAlem AI · Локальный MVP
+<p align="center">
+  <a href="https://github.com/BAITC-Hacks/hack-61bb6bed-sudo-ai">Репозиторий команды</a>
+  · HackAlem AI · Локальный MVP
+</p>
+
+---
 
 ## 1. Зачем мы это сделали
 
